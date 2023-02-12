@@ -42,7 +42,7 @@ class Cloud():
         self.y = y
         self.xv = randint(-100, 100) / 1200 + windspeed * (randint(150, 200) / 500)
         self.yv = randint(-100, 100) / 1000
-        self.size = randint(80, 160)
+        self.size = randint(120, 160)
         f = pygame.font.SysFont("Arial", self.size)
         text = "cloud"
         # only do the thing below once!
@@ -128,17 +128,18 @@ class Weather:
 
     def cloud_tick(self, windspeed):
         if pygame.time.get_ticks() % 40 == 0:
-            if len(self.c) <= 8:
+            if len(self.c) <= 6:
                 while True:
                     flag = False
                     x = randint(0, 400)
+                    y = randint(0, 75)
                     for c in self.c:
-                        if abs(c.x-x) < 50:
+                        if abs(c.x-x) < 50 and abs(c.y-y) < 10:
                             flag = True
                     if not flag:
                         break
                 self.c.append(
-                    Cloud(x, randint(0, 75), windspeed)
+                    Cloud(x, y, windspeed)
                 )
                 LOGGER.info("new cloud")
             else:
