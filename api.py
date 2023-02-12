@@ -7,6 +7,32 @@ import logs
 
 import pgeocode
 
+"""
+DOCUMENTATION
+
+https://openweathermap.org/current
+https://openweathermap.org/weather-conditions
+
+clear sky
+few clouds
+scattered clouds
+broken clouds
+shower rain
+rain
+thunderstorm
+snow
+mist
+
+
+Thunderstorm
+Drizzle
+Rain
+Snow
+Atmosphere
+Clear
+Clouds
+"""
+
 # googledoc
 # - multiple files, images
 # - run the files

@@ -3,7 +3,7 @@ import api
 import logs
 from math import sqrt
 from typing import Tuple
-from random import randint
+from random import randint, random
 
 #print(round(testgather.gather()["main"]["temp"]-273.15, 1))
 GATHERER = api.WeatherGather()
@@ -73,8 +73,19 @@ class Process:
         data = Process._get_data(lat, lon)
         temp = round(data["main"]["temp"]-273.15)
         wtype = data["weather"][0]["main"]
+        wdesc = data["weather"][0]["description"]
         windspeed = data["wind"]["speed"] * 0.51 # wind in m/s
-        return {"temp": temp, "wtype": wtype, "windspeed": windspeed}
+
+        out = {"temp": temp, "wtype": wtype, "windspeed": windspeed, "wdesc": wdesc}
+        #-----TESTING ONLY-----
+
+        out["wtype"] = "Clouds"
+
+        #out["wdesc"] = "shower rain"
+
+        #----------------------
+
+        return out
 
 class Weather:
     WINDOW_SIZE = (800, 600)
@@ -117,33 +128,37 @@ class Weather:
         pygame.display.flip()
 
 
-    def rain_tick(self, windspeed):
-        self.r.append(
-            RainDrop(randint(-200, 800), randint(-100, 100), windspeed)
-        )
+    def rain_tick(self, windspeed, freq=1):
+        if pygame.time.get_ticks() % freq == 0:
+            self.r.append(
+                RainDrop(randint(-200, 800), randint(-100, 100), windspeed)
+            )
         for r in self.r:
             r.move()
             if not r.inside_screen():
                 self.r.remove(r)
 
-    def cloud_tick(self, windspeed):
-        if pygame.time.get_ticks() % 40 == 0:
-            if len(self.c) <= 6:
-                while True:
-                    flag = False
-                    x = randint(0, 400)
-                    y = randint(0, 75)
-                    for c in self.c:
-                        if abs(c.x-x) < 50 and abs(c.y-y) < 10:
-                            flag = True
-                    if not flag:
-                        break
-                self.c.append(
-                    Cloud(x, y, windspeed)
-                )
-                LOGGER.info("new cloud")
-            else:
-                LOGGER.info("too many clouds")
+    def cloud_tick(self, windspeed, freq=1):
+        if pygame.time.get_ticks() % int(5*freq) == 0:
+            if random() > 0.25:
+                if len(self.c) <= 6:
+                    while True:
+                        print("############")
+                        flag = False
+                        x = randint(0, 400)
+                        y = randint(0, 75)
+                        for c in self.c:
+                            print(abs(c.x-x))
+                            if abs(c.x-x) < 80 and abs(c.y-y) < 40:
+                                flag = True
+                        if not flag:
+                            break
+                    self.c.append(
+                        Cloud(x, y, windspeed)
+                    )
+                    LOGGER.info("new cloud")
+                else:
+                    LOGGER.info("too many clouds")
         for c in self.c:
             c.move()
             if not c.inside_screen():
@@ -152,27 +167,35 @@ class Weather:
 
     def mainloop(self):
         LOGGER.info("start weather-mainloop")
+        LAT = 51.13
+        LON = 0.26
 
         self.r = []
         self.c = []
-        info = Process.get_all_weather(lat=51.13, lon=0.26)
+        info = Process.get_all_weather(lat=LAT, lon=LON)
+        log_info = lambda info: LOGGER.info(F"weather-refresh\n\t(main) [{info['wtype'].upper()}]\n\t(desc) [{info['wdesc'].upper()}]")
+        log_info(info)
+
         while True:
 
             x_wind = info["windspeed"]
 
-            """
-            if info["wtype"] == "Rain":
-                self.rain_tick(x_wind)
-            elif info["wtype"] == "Cloudy":
-                self.cloud_tick(x_wind)
-            """
 
-            self.rain_tick(x_wind)
-            self.cloud_tick(x_wind)
+            if info["wtype"] == "Rain":
+                if info["wdesc"] == "shower rain":
+                    rfreq = 3
+                    cfreq = 5
+                elif info["wdesc"] == "rain":
+                    rfreq = 1
+                    cfreq = 3
+                self.rain_tick(x_wind, rfreq)
+                self.cloud_tick(x_wind, cfreq)
+            elif info["wtype"] == "Clouds":
+                self.cloud_tick(x_wind, 3)
 
             if pygame.time.get_ticks() % 800 == 0:
-                LOGGER.info("weather-refresh")
-                info = Process.get_all_weather(lat=51.13, lon=0.26)
+                info = Process.get_all_weather(lat=LAT, lon=LON)
+                log_info(info)
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
