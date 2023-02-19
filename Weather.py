@@ -5,6 +5,8 @@ from math import sqrt
 from typing import Tuple
 from random import randint
 
+TICKS = 40
+
 #print(round(testgather.gather()["main"]["temp"]-273.15, 1))
 GATHERER = api.WeatherGather()
 LOGGER = logs.get_logger("weather")
@@ -12,6 +14,13 @@ LOGGER = logs.get_logger("weather")
 def distance(p1: Tuple[int], p2: Tuple[int]):
     return sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
 
+class Sun():
+    def __init__(self, x, y, freq):
+        self.x = x
+        self.y = y
+        self.freq = freq
+        self.sun_frames = [pygame.image.load("sun1.png"), pygame.image.load("sun2.png")]
+        self.sun_img = self.sun_frames[0]
 class RainDrop():
     def __init__(self, x, y, windspeed):
         self.x = x
@@ -107,10 +116,15 @@ class Weather:
 
         self.screen.fill((0, 255, 0))
         self.screen.blit(self.background, (0, 0))
+
+        # draw sun
+        self.screen.blit(self.s.sun_img, (self.s.x, self.s.y))
+        # draw rain
         for r in self.r:
             start, end, dist = r.pg_rect()
             pygame.draw.line(self.screen, (0, 0, 255), start, end, round(20/dist))
             #pygame.draw.rect(self.screen, (0, 0, 255), r.pg_rect())
+        # draw clouds
         for c in self.c:
             self.screen.blit(c.img, (c.x, c.y))
 
@@ -127,7 +141,7 @@ class Weather:
                 self.r.remove(r)
 
     def cloud_tick(self, windspeed):
-        if pygame.time.get_ticks() % 40 == 0:
+        if pygame.time.get_ticks() % TICKS == 0:
             if len(self.c) <= 6:
                 while True:
                     flag = False
@@ -149,12 +163,16 @@ class Weather:
             if not c.inside_screen():
                 self.c.remove(c)
 
-
+    def sun_tick(self):
+        frame = (pygame.time.get_ticks() // self.s.freq) % len(self.s.sun_frames)
+        self.s.sun_img = self.s.sun_frames[frame]
+        
     def mainloop(self):
         LOGGER.info("start weather-mainloop")
 
         self.r = []
         self.c = []
+        self.s = Sun(0, 0, TICKS*5)
         info = Process.get_all_weather(lat=51.13, lon=0.26)
         while True:
 
@@ -167,10 +185,11 @@ class Weather:
                 self.cloud_tick(x_wind)
             """
 
+            self.sun_tick()
             self.rain_tick(x_wind)
             self.cloud_tick(x_wind)
 
-            if pygame.time.get_ticks() % 800 == 0:
+            if pygame.time.get_ticks() % TICKS*10 == 0:
                 LOGGER.info("weather-refresh")
                 info = Process.get_all_weather(lat=51.13, lon=0.26)
 
@@ -180,7 +199,7 @@ class Weather:
                     return
 
             self.draw_everything()
-            self.clock.tick(40)
+            self.clock.tick(TICKS)
             
 
 if __name__ == "__main__":
