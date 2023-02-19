@@ -1,11 +1,13 @@
 import pygame
 import api
 import logs
+import os
 from math import sqrt
 from typing import Tuple
 from random import randint, random
 
 TICKS = 40
+SUN_FOLDER_PATH = "./sun_images/"
 
 #print(round(testgather.gather()["main"]["temp"]-273.15, 1))
 GATHERER = api.WeatherGather()
@@ -19,7 +21,10 @@ class Sun():
         self.x = x
         self.y = y
         self.freq = freq
-        self.sun_frames = [pygame.image.load("sun1.png"), pygame.image.load("sun2.png")]
+
+        self.sun_frames = []
+        for image in os.listdir(SUN_FOLDER_PATH):
+            self.sun_frames.append(pygame.image.load(SUN_FOLDER_PATH+image))
         self.sun_img = self.sun_frames[0]
 class RainDrop():
     def __init__(self, x, y, windspeed):
