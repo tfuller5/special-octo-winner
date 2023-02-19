@@ -56,7 +56,7 @@ class Cloud():
         text = "cloud"
         # only do the thing below once!
         self.text_surface = f.render(text, True, (255, 0, 0))
-        img = pygame.image.load("cloud.png")
+        img = pygame.image.load("cloudv2.png")
         self.img = pygame.transform.scale(img, (self.size, self.size//3*2))
 
 
@@ -190,7 +190,7 @@ class Weather:
         self.r = []
         self.c = []
         self.s = Sun(0, 0, TICKS*5)
-        
+
         info = Process.get_all_weather(lat=LAT, lon=LON)
         log_info = lambda info: LOGGER.info(F"weather-refresh\n\t(main) [{info['wtype'].upper()}]\n\t(desc) [{info['wdesc'].upper()}]")
         log_info(info)
@@ -201,8 +201,8 @@ class Weather:
 
 
             self.sun_tick()
-            self.rain_tick(x_wind)
-            self.cloud_tick(x_wind)
+            self.rain_tick(x_wind, freq=1)
+            self.cloud_tick(x_wind, freq=10)
 
             if pygame.time.get_ticks() % TICKS*10 == 0:
                 LOGGER.info("weather-refresh")
